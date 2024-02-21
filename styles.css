@@ -1,0 +1,99 @@
+.card {
+    color: #ffffff;
+    margin: 10px;
+    text-align: center; 
+}
+.buttons{
+    text-align: left;
+    border: none;
+}
+
+body {
+    background-color: black;
+    background-image: url("bgs.png");
+   
+}
+background-image{
+    height: 0px;
+}
+.top-section,
+.bottom-section {
+    
+    border-radius: 5px;
+    
+}
+
+.bottom-section {
+    background-color: #474141;
+}
+
+.column-heading {
+    font-size: 16px;
+    font-weight: bold;
+    color: #ffffff;
+}
+
+.top-weather,
+.top-details,
+.bottom-column {
+    margin-top: 10px;
+}
+
+.bottom-column-heading {
+    font-size: 14px;
+    font-weight: bold;
+    color: #ffffff;
+}
+.centered-bg {
+    background-color: #1e1d1d; 
+    text-align: center;
+    color: #474141;
+    padding: 20px; 
+  }
+  .white-icon {
+    filter: brightness(0) invert(1);
+}
+.search,.logo {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 20px;
+    
+}
+
+.row {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.col {
+    flex: 1;
+    text-align: center;
+}
+
+img {
+    max-width: 100%;
+    height: auto;
+}
+
+
+input[type="text"] {
+    background-color: blue;
+    color: white; /* optional: change text color to white */
+    padding: 10px; /* optional: add padding for better appearance */
+    border: none; /* optional: remove default border */
+    height:30px;
+}
+.card-link {
+    color: white;
+    text-decoration: none; /* Remove underlines */
+}
+.vertical-line {
+    border-left: 3px solid rgb(16, 17, 16);
+    height: 100px;
+    position: absolute;
+    left: 50%;
+    margin-left: -50px;
+    top:145px;
+}

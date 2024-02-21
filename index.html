@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Current Weather Updates</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link href="styles.css" rel="stylesheet" type="text/css">
+</head>
+
+<body>
+
+    <div class="logo">
+        <div class="row">
+            <div class="col">
+                <img src="logo.png" alt="Logo" width="200px">
+            </div>
+            <div class="col">
+                <h1>Weather App</h1>
+            </div>
+        </div>
+    </div>
+
+    <div class="search">
+        <b> Search:</b> <input type="text" name="city" id="city">&emsp;
+        <input type="submit" value="Add" class="btn btn-primary">
+    </div>
+
+    <div class="container">
+        <div class="row row-cols-1 row-cols-md-2 g-4" id="card-container">
+            <!-- Cards will be dynamically added here -->
+        </div>
+    </div>
+
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        const colorOptions = [
+            'lightblue', '#2F539B', '#00827F', '#348781', '#006A4E',
+            '#99C68E', 'lightseagreen', '#77DD77'
+        ];
+
+        // Function to create and populate a card
+        function createCard(cardDetails, colorIndex) {
+            const cardLink = document.createElement('a');
+            cardLink.href = `single_card.html?city=${cardDetails.CityCode}&colorIndex=${colorIndex}`;
+            cardLink.classList.add('card-link'); // Add a class for styling
+
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.innerHTML = `
+        <div class="top-section" style="background-color: ${colorOptions[colorIndex]}">
+            <div class="row">
+                <div class="col-md-6">
+                    <h2>${cardDetails.CityName}, ${cardDetails.country}</h2>
+                    <p>${formatDateTime(cardDetails.Sunrise)}</p>
+                    <img src="http://openweathermap.org/img/wn/${cardDetails.Icon}.png" alt="Weather Icon" class="white-icon">${cardDetails.Description}
+                </div>
+                <div class="col-md-6">
+                    <h2>${cardDetails.Temp}°C</h2>
+                    <p>Temp Max: ${cardDetails.MaxTemp}°C</p>
+                    <p>Temp Min: ${cardDetails.MinTemp}°C</p>
+                    <!-- Add more details here -->
+                </div>
+            </div>
+        </div>
+        <div class="bottom-section">
+            <div class="row">
+                
+                <div class="col-md-4">
+                    <p>Pressure: ${cardDetails.Pressure}hpa</p>
+                    <p>Humidity: ${cardDetails.Humidity}%</p>
+                    <p>Visibility: ${cardDetails.Visibility}m</p>
+                    
+                </div>
+                
+                <div class="col-md-4">
+                    <p>&emsp;&emsp;<i class="fab fa-telegram-plane" aria-hidden="true"></i></p>
+                    <p>${cardDetails.WindSpeed} m/s${cardDetails.WindDirection}°</p>
+                    
+                </div>
+             
+                <div class="col-md-4">
+                    <p>Sunrise: ${new Date(cardDetails.Sunrise * 1000).toLocaleTimeString()}</p>
+                    <p>Sunset: ${new Date(cardDetails.Sunset * 1000).toLocaleTimeString()}</p>
+                    
+                </div>
+            </div>
+        </div>
+    `;
+
+            cardLink.appendChild(card);
+
+            return cardLink;
+        }
+
+
+        function formatDateTime(timestamp) {
+            const date = new Date(timestamp * 1000); // Convert timestamp to milliseconds
+            const hours = date.getHours() % 12 || 12; // Get hours in 12-hour format
+            const minutes = date.getMinutes();
+            const period = date.getHours() < 12 ? 'a.m.' : 'p.m.'; // Determine if it's a.m. or p.m.
+
+            // Get month abbreviation (e.g., Jan, Feb, etc.)
+            const monthAbbreviation = new Intl.DateTimeFormat('en-US', { month: 'short' }).format(date);
+
+            // Get day in two-digit format (e.g., '08')
+            const day = String(date.getDate()).padStart(2, '0');
+
+            return `${hours}.${minutes}${period},${monthAbbreviation}${day}`;
+        }
+
+        // Fetch data from the API and generate cards
+        async function fetchDataAndGenerateCards() {
+        const apiKey = '18fc9643295e444acc923d3aa2cb3e23';
+
+    try {
+        // Read the cities.json file to get the city codes
+        const citiesResponse = await fetch('./cities.json');
+        const citiesData = await citiesResponse.json();
+        const cityCodes = citiesData.List.map(city => city.CityCode);
+
+        // Construct the API URL using the city codes
+        const apiUrl = `https://api.openweathermap.org/data/2.5/group?id=${cityCodes.join(',')}&units=metric&appid=${apiKey}`;
+
+        // Check if data is present in the cache and not expired
+        const cachedData = localStorage.getItem('weatherCache');
+        if (cachedData) {
+            const { data, expiresAt } = JSON.parse(cachedData);
+            if (expiresAt > Date.now()) {
+                console.log('Serving weather data from cache');
+                generateCards(data);
+                return;
+            }
+        }
+
+        // Make an HTTP GET request to the weather API
+        const response = await fetch(apiUrl);
+        const responseData = await response.json();
+
+        // Extract relevant data from the API response
+        const transformedData = responseData.list.map(cityData => ({
+            CityCode: cityData.id,
+            CityName: cityData.name,
+            Temp: cityData.main.temp,
+            date: cityData.dt,
+            MinTemp: cityData.main.temp_min,
+            MaxTemp: cityData.main.temp_max,
+            Status: cityData.weather[0].main,
+            Description: cityData.weather[0].description,
+            Icon: cityData.weather[0].icon,
+            Pressure: cityData.main.pressure,
+            Humidity: cityData.main.humidity,
+            Visibility: cityData.visibility,
+            Sunrise: cityData.sys.sunrise,
+            Sunset: cityData.sys.sunset,
+            country: cityData.sys.country,
+            WindSpeed: cityData.wind.speed,
+            WindDirection: cityData.wind.deg
+        }));
+
+        // Cache the fetched data with a 5-minute expiration time
+        const cacheData = {
+            data: transformedData,
+            expiresAt: Date.now() + 5 * 60 * 1000 // 5 minutes in milliseconds
+        };
+        localStorage.setItem('weatherCache', JSON.stringify(cacheData));
+
+        generateCards(transformedData);
+    } catch (error) {
+        console.error('Error fetching weather data:', error);
+    }
+}
+
+
+        function generateCards(data) {
+            const cardContainer = document.getElementById('card-container');
+            data.forEach((details, index) => {
+                const colorIndex = index % colorOptions.length;
+                const card = createCard(details, colorIndex);
+                cardContainer.appendChild(card);
+            });
+        }
+
+        // Load data when DOM content is loaded
+        document.addEventListener('DOMContentLoaded', fetchDataAndGenerateCards);
+    </script>
+
+    <footer>
+        <p class="centered-bg">Weather App &copy; 2023 Fidenz Technologies</p>
+    </footer>
+</body>
+
+</html>
